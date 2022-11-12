@@ -1,0 +1,1 @@
+# zoom-for-find-on-image
