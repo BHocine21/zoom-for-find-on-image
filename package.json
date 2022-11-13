@@ -1,0 +1,35 @@
+{
+  "name": "zoom-for-find-on-image",
+  "version": "1.0.0",
+  "description": "Allows user to add a marker on an image while zooming in/out",
+  "main": "index.js",
+  "scripts": {
+    "start": "parcel index.html"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BHocine21/zoom-for-find-on-image.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/BHocine21/zoom-for-find-on-image/issues"
+  },
+  "homepage": "https://github.com/BHocine21/zoom-for-find-on-image#readme",
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.20.2",
+    "@babel/preset-env": "^7.20.2",
+    "@babel/preset-react": "^7.18.6",
+    "eslint": "^8.27.0",
+    "eslint-config-standard": "^17.0.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-n": "^15.5.1",
+    "eslint-plugin-promise": "^6.1.1",
+    "eslint-plugin-react": "^7.31.10",
+    "parcel-bundler": "^1.12.5"
+  }
+}
