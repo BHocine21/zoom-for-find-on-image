@@ -4,7 +4,7 @@ import worldMap from '../../Images/world_map.jpg'
 
 const ImageComponent = () => {
   // Marker coordinates [x, y].
-  const [marker, setMarker] = useState([0, 0])
+  const [marker, setMarker] = useState(null)
   // Image offsets [offsetLeft, offsetTop].
   const [imgOffsets, setImgOffsets] = useState([0, 0])
   // Image height (25rem by default).
@@ -51,6 +51,11 @@ const ImageComponent = () => {
    *   Update marker in order to persist its position on image.
    */
   const handleResize = () => {
+    // Do nothing if the marker is not displayed.
+    if (!marker) {
+      return
+    }
+
     const img = document.getElementById('image')
     // Compare between old and new image offsets to determine if zoom in our out.
     if (imgOffsets[0] === 0 || imgOffsets[0] > img.offsetLeft) {
@@ -127,19 +132,21 @@ const ImageComponent = () => {
           style={{ height: imgHeight + 'rem', border: '6px solid red' }}
           onClick={getCoords}
         />
-        <div
-          id='marker'
-          style={{
-            position: 'absolute',
-            left: ((marker[0]) + 'px'),
-            top: ((marker[1]) + 'px'),
-            width: '10px',
-            height: '10px',
-            background: '#000000'
-          }}
-        />
+        {marker && (
+          <div
+            id='marker'
+            style={{
+              position: 'absolute',
+              left: ((marker[0]) + 'px'),
+              top: ((marker[1]) + 'px'),
+              width: '10px',
+              height: '10px',
+              background: '#000000'
+            }}
+          />
+        )}
       </div>
-      <div style={{ position: 'absolute', bottom: '0', width: '100%', paddingBottom: '2rem' }}>
+      <div style={{ position: 'fixed', bottom: '0', width: '100%', paddingBottom: '2rem' }}>
         <div style={{ display: 'flex', justifyContent: 'center' }}>
           <div style={{ display: mobileMode ? 'none' : 'flex', marginRight: '1rem' }}>
             <button onClick={() => { toggleZoom(-5) }}>-</button>
