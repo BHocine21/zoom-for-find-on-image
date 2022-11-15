@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 
-import worldMap from '../../Images/world_map.jpg'
+import worldMap from '../../assets/world_map.jpg'
 
 const ImageComponent = () => {
   // Marker coordinates [x, y].
