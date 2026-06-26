@@ -1,77 +1,77 @@
 # Architecture
 
-Ce document explique les choix techniques de la version 2 du projet et comment le code est découpé. Pour l'installation et l'usage, voir le [README](./README.md).
+This document explains the technical choices behind version 2 of the project and how the code is organized. For installation and usage, see the [README](./README.md).
 
 ## Stack
 
-| Domaine         | Choix                                            |
-| --------------- | ------------------------------------------------ |
-| Framework       | React 18 + TypeScript strict                     |
-| Build           | Vite                                             |
-| Gestionnaire    | pnpm                                             |
-| Routing         | react-router-dom (`createBrowserRouter`)         |
-| UI              | MUI (Material UI) + icônes `@mui/icons-material` |
-| Lint/format     | ESLint (flat config) + Prettier + cspell         |
-| Tests unitaires | Jest + React Testing Library                     |
-| Tests e2e       | Playwright (desktop + mobile)                    |
+| Area            | Choice                                          |
+| --------------- | ----------------------------------------------- |
+| Framework       | React 18 + TypeScript strict                    |
+| Build           | Vite                                            |
+| Package manager | pnpm                                            |
+| Routing         | react-router-dom (`createBrowserRouter`)        |
+| UI              | MUI (Material UI) + `@mui/icons-material` icons |
+| Lint/format     | ESLint (flat config) + Prettier + cspell        |
+| Unit tests      | Jest + React Testing Library                    |
+| E2E tests       | Playwright (desktop + mobile)                   |
 
-## Découpage du code
+## Code layout
 
 ```
 src/
-  main.tsx                 → point d'entrée, monte <App />
+  main.tsx                 → entry point, mounts <App />
   App.tsx                  → ThemeProvider + RouterProvider
-  router.tsx                → déclaration des routes (une seule route "/")
-  theme/theme.ts            → thème MUI (palette, typographie)
+  router.tsx                → route declarations (single "/" route)
+  theme/theme.ts            → MUI theme (palette, typography)
   pages/HomePage/           → AppBar + <ImageZoomViewer />
   components/
-    ImageZoomViewer/         → conteneur : branche le hook de logique aux composants de rendu
+    ImageZoomViewer/         → container: wires the logic hook to the render components
       ImageZoomViewer.tsx
-      useImageZoomViewer.ts  → tout le state et les handlers (séparation logique/rendu)
+      useImageZoomViewer.ts  → all state and handlers (logic/render separation)
       types.ts
-    ZoomableImage/           → image + overlay du marqueur, zone de clic
-    ZoomControls/            → slider de zoom, boutons +/-/reset, toggle plein écran
-    MarkerPin/                → icône de marqueur positionnée en %
+    ZoomableImage/           → image + marker overlay, clickable area
+    ZoomControls/            → zoom slider, +/-/reset buttons, fullscreen toggle
+    MarkerPin/                → marker icon positioned in %
   hooks/
-    useIsMobile.ts           → détection mobile via useMediaQuery (MUI)
+    useIsMobile.ts           → mobile detection via useMediaQuery (MUI)
   utils/
-    zoom.ts                  → bornes et calculs de zoom (purs, testés)
-    markerPosition.ts        → conversion clic → position relative (pure, testée)
-  types/index.ts             → types partagés (MarkerPosition, ImageRect)
+    zoom.ts                  → zoom bounds and calculations (pure, tested)
+    markerPosition.ts        → click → relative position conversion (pure, tested)
+  types/index.ts             → shared types (MarkerPosition, ImageRect)
 e2e/
-  zoom-marker.spec.ts        → scénario Playwright (marqueur, zoom, plein écran)
+  zoom-marker.spec.ts        → Playwright scenario (marker, zoom, fullscreen)
 ```
 
-Chaque composant `.tsx` ne contient que du rendu ; toute la logique (state, handlers) vit dans `useImageZoomViewer.ts`, conformément à la séparation des préoccupations.
+Each `.tsx` component only contains rendering; all the logic (state, handlers) lives in `useImageZoomViewer.ts`, following the separation of concerns principle.
 
-## Décisions techniques notables
+## Notable technical decisions
 
-### Le marqueur est stocké en pourcentage, pas en pixels
+### The marker is stored as a percentage, not pixels
 
-L'ancienne version (`ImageComponent.jsx`) stockait le marqueur en pixels absolus (`pageX`/`pageY`) puis tentait de le "recaser" à chaque zoom en comparant les anciens et nouveaux `offsetLeft`/`offsetTop` de l'image. Cette heuristique était fragile et provoquait un drift visible du marqueur pendant le zoom.
+The previous version (`ImageComponent.jsx`) stored the marker in absolute pixels (`pageX`/`pageY`) then tried to "re-fit" it on every zoom by comparing the image's old and new `offsetLeft`/`offsetTop`. That heuristic was fragile and caused a visible drift of the marker while zooming.
 
-Le marqueur est maintenant stocké en **coordonnées relatives à l'image** (`{ xPercent, yPercent }`), calculées au clic via `getBoundingClientRect()` (`utils/markerPosition.ts`). Le rendu positionne le marqueur avec `left/top` en `%` dans un conteneur `position: relative`. Le marqueur reste donc correctement ancré à n'importe quel niveau de zoom, sans listener de resize ni recalcul a posteriori.
+The marker is now stored as **coordinates relative to the image** (`{ xPercent, yPercent }`), computed on click via `getBoundingClientRect()` (`utils/markerPosition.ts`). Rendering positions the marker with `left`/`top` in `%` inside a `position: relative` container. The marker therefore stays correctly anchored at any zoom level, with no resize listener or after-the-fact recalculation.
 
-### Détection mobile sans dépendance dédiée
+### Mobile detection without a dedicated dependency
 
-L'ancien README mentionnait l'intention (jamais réalisée) d'utiliser la librairie `is-mobile`. Comme MUI est déjà dans la stack, `useIsMobile` s'appuie sur `useMediaQuery` (breakpoint `sm`) plutôt que d'ajouter une dépendance supplémentaire pour un besoin déjà couvert.
+The old README mentioned the (never implemented) intent to use the `is-mobile` library. Since MUI is already part of the stack, `useIsMobile` relies on `useMediaQuery` (the `sm` breakpoint) instead of adding another dependency for a need that's already covered.
 
-### Plein écran piloté par React, pas par manipulation directe du DOM
+### Fullscreen driven by React, not direct DOM manipulation
 
-L'ancienne version modifiait `document.body.style.backgroundColor` directement dans un handler. Le mode plein écran est maintenant un simple state (`isFullscreen`) qui pilote les styles via les props `sx` des composants — plus prévisible et testable.
+The previous version mutated `document.body.style.backgroundColor` directly inside a handler. Fullscreen mode is now a simple state (`isFullscreen`) that drives styles via components' `sx` props — more predictable and testable.
 
-### Image en conteneur `overflow: auto`
+### Image container with `overflow: auto`
 
-Le conteneur de l'image utilise `overflow: auto`, ce qui permet de faire défiler l'image quand elle dépasse la zone visible à fort niveau de zoom (l'ancienne version laissait l'image sortir du viewport sans moyen d'y accéder).
+The image container uses `overflow: auto`, allowing the image to be scrolled when it exceeds the visible area at a high zoom level (the previous version let the image spill outside the viewport with no way to reach it).
 
-### Accessibilité
+### Accessibility
 
-- Tous les contrôles (zoom +/-, reset, slider, plein écran) ont un `aria-label` et sont navigables au clavier (éléments natifs `IconButton`/`Slider`).
-- Le clic sur l'image pour poser un marqueur reste une interaction pointeur/tactile uniquement (à l'image d'un clic sur une carte) : il n'a pas d'équivalent clavier significatif, mais n'empêche pas l'usage du reste de l'interface au clavier.
+- All controls (zoom +/-, reset, slider, fullscreen) have an `aria-label` and are keyboard-navigable (native `IconButton`/`Slider` elements).
+- Clicking the image to drop a marker remains a pointer/touch-only interaction (much like clicking on a map): it has no meaningful keyboard equivalent, but it doesn't prevent keyboard use of the rest of the interface.
 
 ## Tests
 
-- **Utils** (`zoom.ts`, `markerPosition.ts`) : cas nominaux et limites (bornes min/max, clic hors image, image de taille nulle).
-- **Hooks** (`useIsMobile`, `useImageZoomViewer`) : logique testée isolément avec `renderHook`.
-- **Composants** : rendu, interactions (clic, slider, boutons), états (marqueur présent/absent, plein écran on/off).
-- **E2E (Playwright)** : parcours complet sur un navigateur desktop et un viewport mobile (pose de marqueur, zoom, plein écran).
+- **Utils** (`zoom.ts`, `markerPosition.ts`): nominal and edge cases (min/max bounds, click outside the image, zero-size image).
+- **Hooks** (`useIsMobile`, `useImageZoomViewer`): logic tested in isolation with `renderHook`.
+- **Components**: rendering, interactions (click, slider, buttons), states (marker present/absent, fullscreen on/off).
+- **E2E (Playwright)**: full flow on a desktop browser and a mobile viewport (placing a marker, zooming, fullscreen).
