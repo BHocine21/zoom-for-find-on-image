@@ -2,6 +2,8 @@
 
 An interface for zooming into an image and dropping a precise marker on it — both on desktop and in mobile fullscreen mode.
 
+🌐 **Live demo:** [zoom-for-find-on-image.vercel.app](https://zoom-for-find-on-image.vercel.app/) (deployed on Vercel)
+
 ![Main page](./screenshots/desktop-main.png)
 
 ## ✨ Features
